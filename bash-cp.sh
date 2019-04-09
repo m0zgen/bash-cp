@@ -42,6 +42,8 @@ else
     exit 1
 fi
 
+ME=`basename "$0"`
+
 # Checking folders
 # ---------------------------------------------------\
 if [[ ! -d /srv/www ]]; then
@@ -62,13 +64,13 @@ function is_lemp_installed
 {
     if rpm -qa | grep "nginx\|php" > /dev/null 2>&1
 	then
-	      Info "Success. LEMP Installed"
+	      Info "Success. LEMP Installed and ready"
 	      _IS_LEMP_INSTALLED=1
 	else
 	      Error "Nginx or PHP-FPM not installed"
 	fi
     # _IS_LEMP_INSTALLED=0
-    
+
 }
 
 function install_lemp
@@ -90,13 +92,43 @@ _EOF_
 		yum-config-manager --enable remi-php72
 		yum install nginx php-fpm php-common -y
 
+    # Configure
+    sed -i 's/^\(user =\).*/\1 nginx/' /etc/php-fpm.d/www.conf
+    sed -i 's/^\(group =\).*/\1 nginx/' /etc/php-fpm.d/www.conf
+    sed -i 's/^\(listen =\).*/\1 \/run\/php-fpm\/www.sock/' /etc/php-fpm.d/www.conf
+    sed -i 's/;listen.owner = .*/listen.owner = nginx/' /etc/php-fpm.d/www.conf
+    sed -i 's/;listen.group = .*/listen.group = nginx/' /etc/php-fpm.d/www.conf
+    sed -i 's/;listen.mode = .*/listen.mode = 0600/' /etc/php-fpm.d/www.conf
+
+    # Enabling and start services
+    systemctl enable php-fpm.service && systemctl start php-fpm.service
+    systemctl enable nginx && systemctl start nginx
+
+    Info "Ok, all software installed... I'm trying self restarting..."
+
+    $SCRIPT_PATH/$(basename $0) && exit
+
     elif [[ "$DISTR" == "Fedora" ]]; then
-    	# Need 
+    	# Need
     	dnf install nginx php-fpm php-common
     fi
 }
 
-function setup_new_site
+function setup_new_site ()
+{
+  read -p "Setup new site name (domain name): " site
+  if [[ $site != "" ]] ; then
+    if [[ -d /srv/www/$1/$site ]]; then
+      mkdir -p /srv/www/$1/$site
+      chown -Rf $1:nginx /srv/www/$1/$site
+      Info "Site $site created in the /srv/www/$1"
+    else
+      Error "Site $site already exist!"
+    fi
+  fi
+}
+
+function setup_new_user
 {
 	Info "Setup new site"
 	read -p "Setup new user name: " user
@@ -104,25 +136,26 @@ function setup_new_site
 	if [[ $user != "" ]] ; then
 
 		if [ $(getent passwd $user) ] ; then
-	        Error user $user exists
+	        Error "User $user exists"
+          read -p "Add new site to $user? [y/n] " addsite
+          if [[ $addsite = y ]]; then
+            setup_new_site $user
+          fi
 		else
-	      	Info "User name is $user"
+	      Info "User name is $user"
 		  	useradd $user -r -s /sbin/nologin
 		  	usermod -G nginx $user
-		  	
-		  	read -p "Setup new site name (domain name): " site
-		  	if [[ $site != "" ]] ; then
-		  		mkdir -p /srv/www/$user/$site
-		  		chown -Rf $user:nginx /srv/www/$user/$site
-		  	fi 
-		  Info "Done! User created!" 
+
+        setup_new_site $user
+
+		  Info "Done! User and site created!"
 		fi
 	fi
 }
 
 function view_sites
 {
-	Info "View installed sites"	
+	Info "View installed sites"
 
 	ls /srv/www
 
@@ -188,11 +221,11 @@ while true
 	do
 		PS3='Please enter your choice: '
 		options=("Setup new site" "View installed sites" "Delete site" "Quit")
-		select opt in "${options[@]}" 
+		select opt in "${options[@]}"
 		do
 		 case $opt in
 		     "Setup new site")
-		         setup_new_site
+		         setup_new_user
 		         break
 		         ;;
 		     "View installed sites")
@@ -204,7 +237,7 @@ while true
 		         break
 		         ;;
 		     "Quit")
-		         echo "Thank You..."                 
+		         Info "Thank You... Bye"
 		         exit
 		         ;;
 		     *) echo invalid option;;
