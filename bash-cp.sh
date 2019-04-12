@@ -42,6 +42,9 @@ else
     exit 1
 fi
 
+ME=`basename "$0"`
+SITE_AVALIABLE="/etc/nginx/sites-available"
+
 # Checking folders
 # ---------------------------------------------------\
 if [[ ! -d /srv/www ]]; then
@@ -62,13 +65,13 @@ function is_lemp_installed
 {
     if rpm -qa | grep "nginx\|php" > /dev/null 2>&1
 	then
-	      Info "Success. LEMP Installed"
+	      Info "Success. LEMP Installed and ready"
 	      _IS_LEMP_INSTALLED=1
 	else
 	      Error "Nginx or PHP-FPM not installed"
 	fi
     # _IS_LEMP_INSTALLED=0
-    
+
 }
 
 function install_lemp
@@ -90,13 +93,103 @@ _EOF_
 		yum-config-manager --enable remi-php72
 		yum install nginx php-fpm php-common -y
 
+    # Configure
+    sed -i 's/^\(user =\).*/\1 nginx/' /etc/php-fpm.d/www.conf
+    sed -i 's/^\(group =\).*/\1 nginx/' /etc/php-fpm.d/www.conf
+    sed -i 's/^\(listen =\).*/\1 \/run\/php-fpm\/www.sock/' /etc/php-fpm.d/www.conf
+    sed -i 's/;listen.owner = .*/listen.owner = nginx/' /etc/php-fpm.d/www.conf
+    sed -i 's/;listen.group = .*/listen.group = nginx/' /etc/php-fpm.d/www.conf
+    sed -i 's/;listen.mode = .*/listen.mode = 0600/' /etc/php-fpm.d/www.conf
+    sed -i '/^    include \/etc\/nginx\/conf.d*/a \    include \/etc\/nginx\/sites-available\/*.conf;' /etc/nginx/nginx.conf
+
+    firewall-cmd --permanent --zone=public --add-service=http
+    firewall-cmd --permanent --zone=public --add-service=https
+    firewall-cmd --reload
+
+    # Enabling and start services
+    systemctl enable php-fpm.service && systemctl start php-fpm.service
+    systemctl enable nginx && systemctl start nginx
+
+    Info "Ok, all software installed... I'm trying self restarting..."
+
+    $SCRIPT_PATH/$(basename $0) && exit
+
     elif [[ "$DISTR" == "Fedora" ]]; then
-    	# Need 
+    	# Need
     	dnf install nginx php-fpm php-common
     fi
 }
 
-function setup_new_site
+function genIndexPage ()
+{
+      cat > $1/index.php <<_EOF_
+<html>
+ <head>
+    <title>${2}</title>
+ </head>
+ <body>
+    <h1>${2} working!</h1>
+ </body>
+</html>
+_EOF_
+
+}
+
+function setup_nginx_config_site ()
+{
+  local user=$1
+  local site=$2
+
+  cat > /etc/nginx/sites-available/$1-$2.conf <<_EOF_
+server {
+    server_name ${1};
+    access_log /srv/www/${1}/${2}/logs/access.log;
+    error_log /srv/www/${1}/${2}/logs/error.log;
+    root /srv/www/${1}/${2}/public_html;
+    location / {
+        index index.html index.htm index.php;
+    }
+    location ~ \.php$ {
+        include /etc/nginx/fastcgi_params;
+        fastcgi_pass  unix:/run/php-fpm/www.sock;
+        fastcgi_index index.php;
+        fastcgi_param SCRIPT_FILENAME \$document_root\$fastcgi_script_name;
+    }
+}
+_EOF_
+
+  cd /etc/nginx/sites-enabled/
+  ln -s /etc/nginx/sites-available/$1-$2.conf
+
+}
+
+function setup_new_site ()
+{
+
+  read -p "Setup new site name (domain name): " site
+
+  if [[ $site != "" ]] ; then
+
+    if [ -d /srv/www/$1/$site/ ]; then
+      Error "Site exist!"
+    else
+
+      mkdir -p /srv/www/$1/$site/logs
+      mkdir -p /srv/www/$1/$site/public_html
+      genIndexPage /srv/www/$1/$site/public_html $site
+
+      chown -Rf $1:nginx /srv/www/$1/$site
+
+      # Setup $1 = username, $2 = domain name
+      setup_nginx_config_site $1 $site
+
+      systemctl restart nginx
+      Info "Site $site created in the /srv/www/$1/$site"
+    fi
+  fi
+}
+
+function setup_new_user
 {
 	Info "Setup new site"
 	read -p "Setup new user name: " user
@@ -104,31 +197,32 @@ function setup_new_site
 	if [[ $user != "" ]] ; then
 
 		if [ $(getent passwd $user) ] ; then
-	        Error user $user exists
+	        Error "User $user exists"
+          read -p "Add new site to $user? [y/n] " addsite
+          if [[ $addsite = y ]]; then
+            setup_new_site $user
+          fi
 		else
-	      	Info "User name is $user"
+	      Info "User name is $user"
 		  	useradd $user -r -s /sbin/nologin
 		  	usermod -G nginx $user
-		  	
-		  	read -p "Setup new site name (domain name): " site
-		  	if [[ $site != "" ]] ; then
-		  		mkdir -p /srv/www/$user/$site
-		  		chown -Rf $user:nginx /srv/www/$user/$site
-		  	fi 
-		  Info "Done! User created!" 
+
+        setup_new_site $user
+
+		  Info "Done! User and site created!"
 		fi
 	fi
 }
 
 function view_sites
 {
-	Info "View installed sites"	
+	Info "View installed sites"
 
 	ls /srv/www
 
 }
 
-function delete_sites
+function delete_user
 {
 	Info "Delete existing sites"
 	read -p "Which user to remove?: " user
@@ -136,7 +230,7 @@ function delete_sites
 	if [[ $user != "" ]] ; then
 		if [[ $(getent passwd $user) ]]; then
 			Info "Delete user $user"
-			read -p "Are you shure? [y/n]" shure
+			read -p "Are you shure? [y/n] " shure
 			if [[ $shure = y ]]; then
 				userdel -r $user > /dev/null 2>&1
 				rm -rf /srv/www/$user
@@ -187,24 +281,24 @@ else
 while true
 	do
 		PS3='Please enter your choice: '
-		options=("Setup new site" "View installed sites" "Delete site" "Quit")
-		select opt in "${options[@]}" 
+		options=("Setup new site" "View installed sites" "Delete user" "Quit")
+		select opt in "${options[@]}"
 		do
 		 case $opt in
 		     "Setup new site")
-		         setup_new_site
+		         setup_new_user
 		         break
 		         ;;
 		     "View installed sites")
 		         view_sites
 		         break
 		         ;;
-		     "Delete site")
-		         delete_sites
+		     "Delete user")
+		         delete_user
 		         break
 		         ;;
 		     "Quit")
-		         echo "Thank You..."                 
+		         Info "Thank You... Bye"
 		         exit
 		         ;;
 		     *) echo invalid option;;
