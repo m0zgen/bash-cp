@@ -99,16 +99,54 @@ _EOF_
 function setup_new_site
 {
 	Info "Setup new site"
+	read -p "Setup new user name: " user
+
+	if [[ $user != "" ]] ; then
+
+		if [ $(getent passwd $user) ] ; then
+	        Error user $user exists
+		else
+	      	Info "User name is $user"
+		  	useradd $user -r -s /sbin/nologin
+		  	usermod -G nginx $user
+		  	
+		  	read -p "Setup new site name (domain name): " site
+		  	if [[ $site != "" ]] ; then
+		  		mkdir -p /srv/www/$user/$site
+		  		chown -Rf $user:nginx /srv/www/$user/$site
+		  	fi 
+		  Info "Done! User created!" 
+		fi
+	fi
 }
 
 function view_sites
 {
 	Info "View installed sites"	
+
+	ls /srv/www
+
 }
 
 function delete_sites
 {
 	Info "Delete existing sites"
+	read -p "Which user to remove?: " user
+
+	if [[ $user != "" ]] ; then
+		if [[ $(getent passwd $user) ]]; then
+			Info "Delete user $user"
+			read -p "Are you shure? [y/n]" shure
+			if [[ $shure = y ]]; then
+				userdel -r $user > /dev/null 2>&1
+				rm -rf /srv/www/$user
+			else
+				Info "User does not deleted!"
+			fi
+		else
+			Error "User does not exist!"
+		fi
+	fi
 }
 
 function close_me
@@ -145,39 +183,34 @@ if [ "$_IS_LEMP_INSTALLED" == "" ]; then
 	fi
 else
 
-	Info "Whant do you want?"
-    echo "   1) Setup new site"
-    echo "   2) View installed sites"
-    echo "   3) Delete site"
-    echo "   4) Exit"
-    read -p "Install [1-3]: " -e -i 1 ACTION
 
-    case $ACTION in
-        1)
-        SITE_ACTION=1
-        ;;
-        2)
-        SITE_ACTION=2
-        ;;
-        3)
-        SITE_ACTION=3
-        ;;
-        4)
-        SITE_ACTION=4
-        ;;
-    esac
-
-    if [[ "$SITE_ACTION" = 1 ]]; then
-		#statements
-		setup_new_site
-	elif [[ "$SITE_ACTION" = 2 ]]; then
-		view_sites
-	elif [[ "$SITE_ACTION" = 3 ]]; then
-		delete_sites
-	else
-		Info "Ok, see next time, bye :)"
-		exit 0
-	fi
+while true
+	do
+		PS3='Please enter your choice: '
+		options=("Setup new site" "View installed sites" "Delete site" "Quit")
+		select opt in "${options[@]}" 
+		do
+		 case $opt in
+		     "Setup new site")
+		         setup_new_site
+		         break
+		         ;;
+		     "View installed sites")
+		         view_sites
+		         break
+		         ;;
+		     "Delete site")
+		         delete_sites
+		         break
+		         ;;
+		     "Quit")
+		         echo "Thank You..."                 
+		         exit
+		         ;;
+		     *) echo invalid option;;
+		 esac
+	done
+ done
 
 fi
 
