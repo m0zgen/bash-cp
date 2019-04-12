@@ -31,6 +31,8 @@ if [ -e /etc/centos-release ]; then
     DISTR="CentOS"
 elif [ -e /etc/fedora-release ]; then
     DISTR="Fedora"
+    Error "At this time scipt workink on CentOS only"
+    exit 0
 else
     echo "Your distribution is not supported (yet)"
     exit 1
@@ -71,20 +73,21 @@ function install_lemp
 
     if [[ "$DISTR" == "CentOS" ]]; then
     	Info "CentOS detected... Install necessary software.."
-cat > /etc/yum.repos.d/nginx.repo <<_EOF_
+		cat > /etc/yum.repos.d/nginx.repo <<_EOF_
 [nginx]
 name=nginx repo
 baseurl=http://nginx.org/packages/centos/\$releasever/\$basearch/
 gpgcheck=0
 enabled=1
 _EOF_
+
 		yum install yum-utils epel-release -y
 		yum install http://rpms.famillecollet.com/enterprise/remi-release-7.rpm -y
 		yum-config-manager --enable remi-php72
 		yum install nginx php-fpm php-common -y
 
     elif [[ "$DISTR" == "Fedora" ]]; then
-    	
+    	# Need 
     	dnf install nginx php-fpm php-common
     fi
 }
