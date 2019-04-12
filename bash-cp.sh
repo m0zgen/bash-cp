@@ -102,6 +102,8 @@ _EOF_
     sed -i 's/;listen.mode = .*/listen.mode = 0600/' /etc/php-fpm.d/www.conf
     sed -i '/^    include \/etc\/nginx\/conf.d*/a \    include \/etc\/nginx\/sites-available\/*.conf;' /etc/nginx/nginx.conf
 
+    sed -i 's/^\(disable_functions =\).*/\1 dl,exec,passthru,pcntl_exec,pfsockopen,popen,posix_kill,posix_mkfifo,posix_setuid,proc_close,proc_open,proc_terminate,shell_exec,system,leak,posix_setpgid,posix_setsid,proc_get_status,proc_nice,show_source,escapeshellcmd/' /etc/php.ini
+
     firewall-cmd --permanent --zone=public --add-service=http
     firewall-cmd --permanent --zone=public --add-service=https
     firewall-cmd --reload
@@ -142,8 +144,8 @@ function setup_nginx_config_site ()
 
   cat > /etc/nginx/sites-available/$1-$2.conf <<_EOF_
 server {
-    listen         80 default_server;
-    listen         [::]:80 default_server;
+    listen         80;
+    listen         [::]:80;
 
     server_name ${2} www.${2};
     access_log /srv/www/${1}/${2}/logs/access.log;
