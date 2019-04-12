@@ -142,12 +142,15 @@ function setup_nginx_config_site ()
 
   cat > /etc/nginx/sites-available/$1-$2.conf <<_EOF_
 server {
-    server_name ${1};
+    listen         80 default_server;
+    listen         [::]:80 default_server;
+
+    server_name ${2} www.${2};
     access_log /srv/www/${1}/${2}/logs/access.log;
     error_log /srv/www/${1}/${2}/logs/error.log;
     root /srv/www/${1}/${2}/public_html;
     location / {
-        index index.html index.htm index.php;
+        index index.php;
     }
     location ~ \.php$ {
         include /etc/nginx/fastcgi_params;
