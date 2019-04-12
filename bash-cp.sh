@@ -2,6 +2,10 @@
 # Cretaed by Yevgeniy Gonvharov, https://sys-adm.in
 # Simple BASH Conreol Panel for VPS (CentOS / Fedora) LEMP Server
 
+# Envs
+# ---------------------------------------------------\
+PATH=$PATH:/bin:/sbin:/usr/bin:/usr/sbin:/usr/local/bin:/usr/local/sbin
+SCRIPT_PATH=$(cd `dirname "${BASH_SOURCE[0]}"` && pwd)
 
 # Additions
 # ---------------------------------------------------\
