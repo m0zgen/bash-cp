@@ -54,7 +54,7 @@ fi
 # ---------------------------------------------------\
 function is_lemp_installed
 {
-    if rpm -qa | grep "nginx\|php"
+    if rpm -qa | grep "nginx\|php" > /dev/null 2>&1
 	then
 	      Info "Success. LEMP Installed"
 	      _IS_LEMP_INSTALLED=1
@@ -89,6 +89,28 @@ _EOF_
     fi
 }
 
+function setup_new_site
+{
+	Info "Setup new site"
+}
+
+function view_sites
+{
+	Info "View installed sites"	
+}
+
+function delete_sites
+{
+	Info "Delete existing sites"
+}
+
+function close_me
+{
+	Info "Ok, bye!"
+	exit 0
+}
+
+
 # Checking is LEMP installed
 is_lemp_installed
 
@@ -100,18 +122,56 @@ if [ "$_IS_LEMP_INSTALLED" == "" ]; then
 
     case $INSTALL_CHOICE in
         1)
-        INSTALL_LEMP=true
+        INSTALL_LEMP=1
         ;;
         2)
-        INSTALL_LEMP=false
+        INSTALL_LEMP=0
         ;;
     esac
+
+    if [[ "$INSTALL_LEMP" = 1 ]]; then
+		#statements
+		install_lemp
+	else
+		Info "Ok, see next time, bye :)"
+		exit 0
+	fi
+else
+
+	Info "Whant do you want?"
+    echo "   1) Setup new site"
+    echo "   2) View installed sites"
+    echo "   3) Delete site"
+    echo "   4) Exit"
+    read -p "Install [1-3]: " -e -i 1 ACTION
+
+    case $ACTION in
+        1)
+        SITE_ACTION=1
+        ;;
+        2)
+        SITE_ACTION=2
+        ;;
+        3)
+        SITE_ACTION=3
+        ;;
+        4)
+        SITE_ACTION=4
+        ;;
+    esac
+
+    if [[ "$SITE_ACTION" = 1 ]]; then
+		#statements
+		setup_new_site
+	elif [[ "$SITE_ACTION" = 2 ]]; then
+		view_sites
+	elif [[ "$SITE_ACTION" = 3 ]]; then
+		delete_sites
+	else
+		Info "Ok, see next time, bye :)"
+		exit 0
+	fi
+
 fi
 
-if [[ "$INSTALL_LEMP" = true ]]; then
-	#statements
-	install_lemp
-else
-	Info "Ok, see next time, bye :)"
-	exit 0
-fi
+
