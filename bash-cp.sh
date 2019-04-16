@@ -290,7 +290,6 @@ function view_sites
   fi
 
   space
-
 }
 
 function delete_user
@@ -333,6 +332,8 @@ function close_me
 is_lemp_installed
 
 if [ "$_IS_LEMP_INSTALLED" == "" ]; then
+    reset
+
     Info "Install NGINX and PHP-FPM?"
     echo "   1) Yes"
     echo "   2) No"
@@ -348,7 +349,6 @@ if [ "$_IS_LEMP_INSTALLED" == "" ]; then
     esac
 
     if [[ "$INSTALL_LEMP" = 1 ]]; then
-		#statements
 		install_lemp
 	else
 		Info "Ok, see next time, bye :)"
@@ -360,6 +360,7 @@ else
 
   while true
   	do
+      reset
   		PS3='Please enter your choice: '
   		options=("Setup new site" "View installed sites" "Delete user" "Quit")
   		select opt in "${options[@]}"
