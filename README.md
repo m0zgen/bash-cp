@@ -8,7 +8,11 @@ Bash-co does not require installation, connect to server via SSH, install git:
 ```bash
 yum install git -y
 ```
+Clone repo:
+```bash
+git clone https://github.com/m0zgen/bash-cp.git
+```
 Them cd to bashp-cp folder and run bash-cp cript:
 ```bash
-cd bash-cp && ./bash-cp
+cd bash-cp && ./bash-cp.sh
 ```
