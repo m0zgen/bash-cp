@@ -115,7 +115,7 @@ function is_lemp_installed
 
 function allowFirewalldService() {
 	#statements
-	firewall-cmd --permanent --zone=public --add-service=$1
+	firewall-cmd --permanent --zone=$2 --add-service=$1
 }
 
 # get Actual date

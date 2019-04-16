@@ -16,7 +16,6 @@ SCRIPT_PATH=$(cd `dirname "${BASH_SOURCE[0]}"` && pwd)
 # ---------------------------------------------------\
 # Checking root permission for current user
 isRoot
-isSELinux
 
 # Checking distro
 if [ -e /etc/centos-release ]; then
@@ -49,6 +48,26 @@ checkAndCreateFolder "/etc/nginx/sites-enabled"
 
 # Functions
 # ---------------------------------------------------\
+function setupSELinux {
+  # SELinux
+  # ---------------------------------------------------\
+  Info "Checking SELinux..."
+  isSELinux
+
+  ##
+  cd $SCRIPT_PATH/se/
+  checkmodule -M -m -o nginx.mod nginx.te
+  semodule_package  -m nginx.mod -o nginx.pp
+  semodule -i nginx.pp
+  semanage fcontext -a -t httpd_sys_rw_content_t "/home/$OS_USER/user/roject(/.*)?"
+  semanage fcontext -a -t httpd_sys_rw_content_t "/home/$OS_USER/web-files(/.*)?"
+  restorecon -RF /home/$OS_USER/RMT/rtproject
+  restorecon -RF /home/$OS_USER/web-files
+
+  systemctl restart gunicorn && systemctl restart nginx
+}
+
+
 function install_lemp
 {
     Info "Install LEMP procedure..."
@@ -83,8 +102,8 @@ function install_lemp
       installSelfSignedNginxSSL
 
       # Firewalld
-      allowFirewalldService "http"
-      allowFirewalldService "https"
+      allowFirewalldService "http" "public"
+      allowFirewalldService "https" "public"
       firewall-cmd --reload
 
       # Enabling and start services
@@ -139,6 +158,36 @@ server {
         fastcgi_index index.php;
         fastcgi_param SCRIPT_FILENAME \$document_root\$fastcgi_script_name;
     }
+}
+server {
+    listen 443 ssl;
+    server_name ${2} www.${2};
+
+    location = /favicon.ico { access_log off; log_not_found off; }
+    access_log /srv/www/${1}/${2}/logs/access.log;
+    error_log /srv/www/${1}/${2}/logs/error.log;
+    root /srv/www/${1}/${2}/public_html;
+    location / {
+        index index.php;
+    }
+    location ~ \.php$ {
+        include /etc/nginx/fastcgi_params;
+        fastcgi_pass  unix:/run/php-fpm/www.sock;
+        fastcgi_index index.php;
+        fastcgi_param SCRIPT_FILENAME \$document_root\$fastcgi_script_name;
+    }
+ssl on;
+ssl_certificate /etc/nginx/ssl/nginx-selfsigned.crt;
+ssl_certificate_key /etc/nginx/ssl/nginx-selfsigned.key;
+
+ssl_ciphers EECDH:+AES256:-3DES:RSA+AES:RSA+3DES:!NULL:!RC4:!RSA+3DES;
+ssl_prefer_server_ciphers on;
+
+ssl_protocols  TLSv1.1 TLSv1.2;
+add_header Strict-Transport-Security "max-age=31536000; includeSubdomains; preload";
+add_header X-XSS-Protection "1; mode=block";
+add_header X-Frame-Options "SAMEORIGIN";
+add_header X-Content-Type-Options nosniff;
 }
 _EOF_
 
