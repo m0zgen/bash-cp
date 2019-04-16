@@ -279,7 +279,7 @@ function setup_new_user
 
 function view_sites
 {
-	Info "View installed sites"
+	Info "\nView installed sites:"
 
   colUsers=$(ls /srv/www | wc -l)
   if [[ "$colUsers" = "" ]]; then
@@ -288,7 +288,7 @@ function view_sites
     Info "Created users - $colUsers"
     ls /srv/www
   fi
-  
+
 }
 
 function delete_user
@@ -303,8 +303,8 @@ function delete_user
 			if [[ $shure = y ]]; then
 
         rm -f $(ls /etc/php-fpm.d/$user-*) > /dev/null 2>&1
-        rm -f $(ls /etc/nginx/sites-enabled/user1-*) > /dev/null 2>&1
-        rm -f $(ls /etc/nginx/sites-available/user1-*) > /dev/null 2>&1
+        rm -f $(ls /etc/nginx/sites-enabled/$user-*) > /dev/null 2>&1
+        rm -f $(ls /etc/nginx/sites-available/$user-*) > /dev/null 2>&1
 
         restartLEMP
 
