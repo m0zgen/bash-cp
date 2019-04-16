@@ -2,33 +2,21 @@
 # Cretaed by Yevgeniy Gonvharov, https://sys-adm.in
 # Simple BASH Conreol Panel for VPS (CentOS / Fedora) LEMP Server
 
+# Libs / Configs
+# ---------------------------------------------------\
+source "$(pwd)/lib/lib.sh"
+config="$(pwd)/config/conf-cp.json"
+
 # Envs
 # ---------------------------------------------------\
 PATH=$PATH:/bin:/sbin:/usr/bin:/usr/sbin:/usr/local/bin:/usr/local/sbin
 SCRIPT_PATH=$(cd `dirname "${BASH_SOURCE[0]}"` && pwd)
 
-# Additions
-# ---------------------------------------------------\
-Info() {
-  printf "\033[1;32m$@\033[0m\n"
-}
-
-Error()
-{
-  printf "\033[1;31m$@\033[0m\n"
-}
-
-Warn() {
-        printf "\033[1;35m$@\033[0m\n"
-}
-
 # Checking admin permissions and current distro
 # ---------------------------------------------------\
 # Checking root permission for current user
-if [[ "$EUID" -ne 0 ]]; then
-    echo "Sorry, you need to run this as root"
-    exit 1
-fi
+isRoot
+isSELinux
 
 # Checking distro
 if [ -e /etc/centos-release ]; then
@@ -43,21 +31,21 @@ else
 fi
 
 ME=`basename "$0"`
+SERVER_IP=$(hostname -I | cut -d' ' -f1)
 SITE_AVALIABLE="/etc/nginx/sites-available"
 
-# Checking folders
+# DB server settings
+typeset -l DB_NAME
+DB_NAME="$(getConfig "dbname")$(getRandom)"
+typeset -l DB_USER
+DB_USER="$(getConfig "dbuser")$(getRandom)"
+DB_PASS=$(getRandom)
+
+# Checking /srv/www folders
 # ---------------------------------------------------\
-if [[ ! -d /srv/www ]]; then
-  mkdir -p /srv/www
-fi
-
-if [[ ! -d /etc/nginx/sites-available ]]; then
-  mkdir -p /etc/nginx/sites-available
-fi
-
-if [[ ! -d /etc/nginx/sites-enabled ]]; then
-  mkdir -p /etc/nginx/sites-enabled
-fi
+checkAndCreateFolder "/srv/www"
+checkAndCreateFolder "/etc/nginx/sites-available"
+checkAndCreateFolder "/etc/nginx/sites-enabled"
 
 # Functions
 # ---------------------------------------------------\
@@ -80,18 +68,18 @@ function install_lemp
 
     if [[ "$DISTR" == "CentOS" ]]; then
     	Info "CentOS detected... Install necessary software.."
-		cat > /etc/yum.repos.d/nginx.repo <<_EOF_
-[nginx]
-name=nginx repo
-baseurl=http://nginx.org/packages/centos/\$releasever/\$basearch/
-gpgcheck=0
-enabled=1
-_EOF_
 
-		yum install yum-utils epel-release -y
-		yum install http://rpms.famillecollet.com/enterprise/remi-release-7.rpm -y
-		yum-config-manager --enable remi-php72
-		yum install nginx php-fpm php-common -y
+      # Installs
+      # ---------------------------------------------------\
+      # Install updates && repos
+      spin 'Erase packages...' 'yum erase iwl* -y'
+      spin 'Update system...' 'yum update -y'
+      # NGINX, REMI
+      spin 'Install repos...' 'installRepos'
+      # Install PSQL, Redis, Python 3.6 and etc...
+      spin 'Install general software...' 'installSoftware'
+
+      sleep 5
 
     # Configure
     sed -i 's/^\(user =\).*/\1 nginx/' /etc/php-fpm.d/www.conf
@@ -312,5 +300,3 @@ while true
  done
 
 fi
-
-

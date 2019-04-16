@@ -1,0 +1,8 @@
+deltarpm
+policycoreutils-python
+nano
+wget
+yum-priorities
+nginx
+php-fpm
+php-common
