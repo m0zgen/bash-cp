@@ -3,6 +3,13 @@
 * Bash-cp - simple user focused interface
 * Bash-cp - working on CentOS / Fedora (will future)
 
+### Features
+* Create users & Delete users
+* Create sites & Delete sites
+* Create nginx config for each site & user
+* Create php-fpm pool config for each site & user
+* View created users list
+
 ### Install
 Bash-co does not require installation, connect to server via SSH, install git:
 ```bash
