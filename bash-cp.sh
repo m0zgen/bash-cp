@@ -48,6 +48,7 @@ checkAndCreateFolder "/etc/nginx/sites-enabled"
 
 # Checking needed software
 if ! rpm -qa | grep "jq" > /dev/null 2>&1
+then
       spin 'Install jq...' 'yum install jq -y'
 fi
 
