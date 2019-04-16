@@ -33,18 +33,15 @@ ME=`basename "$0"`
 SERVER_IP=$(hostname -I | cut -d' ' -f1)
 SITE_AVALIABLE="/etc/nginx/sites-available"
 
-# Checking needed software (getconfig)
-if ! rpm -qa | grep "jq" > /dev/null 2>&1
-then
-      spin 'Install jq...' 'yum install jq -y'
-fi
-
-# DB server settings
-typeset -l DB_NAME
-DB_NAME="$(getConfig "dbname")$(getRandom)"
-typeset -l DB_USER
-DB_USER="$(getConfig "dbuser")$(getRandom)"
-DB_PASS=$(getRandom)
+function setConfigVars
+{
+  # DB server settings
+  typeset -l DB_NAME
+  DB_NAME="$(getConfig "dbname")$(getRandom)"
+  typeset -l DB_USER
+  DB_USER="$(getConfig "dbuser")$(getRandom)"
+  DB_PASS=$(getRandom)
+}
 
 # Checking /srv/www folders
 # ---------------------------------------------------\
@@ -338,33 +335,34 @@ if [ "$_IS_LEMP_INSTALLED" == "" ]; then
 	fi
 else
 
+  setConfigVars
 
-while true
-	do
-		PS3='Please enter your choice: '
-		options=("Setup new site" "View installed sites" "Delete user" "Quit")
-		select opt in "${options[@]}"
-		do
-		 case $opt in
-		     "Setup new site")
-		         setup_new_user
-		         break
-		         ;;
-		     "View installed sites")
-		         view_sites
-		         break
-		         ;;
-		     "Delete user")
-		         delete_user
-		         break
-		         ;;
-		     "Quit")
-		         Info "Thank You... Bye"
-		         exit
-		         ;;
-		     *) echo invalid option;;
-		 esac
-	done
- done
+  while true
+  	do
+  		PS3='Please enter your choice: '
+  		options=("Setup new site" "View installed sites" "Delete user" "Quit")
+  		select opt in "${options[@]}"
+  		do
+  		 case $opt in
+  		     "Setup new site")
+  		         setup_new_user
+  		         break
+  		         ;;
+  		     "View installed sites")
+  		         view_sites
+  		         break
+  		         ;;
+  		     "Delete user")
+  		         delete_user
+  		         break
+  		         ;;
+  		     "Quit")
+  		         Info "Thank You... Bye"
+  		         exit
+  		         ;;
+  		     *) echo invalid option;;
+  		 esac
+  	done
+   done
 
 fi
