@@ -51,6 +51,12 @@ checkAndCreateFolder "/etc/nginx/sites-enabled"
 
 # Functions
 # ---------------------------------------------------\
+function restartLEMP
+{
+  systemctl restart php-fpm && systemctl restart nginx
+}
+
+
 function setupSELinux {
   # SELinux
   # ---------------------------------------------------\
@@ -67,9 +73,8 @@ function setupSELinux {
   restorecon -RF /home/$OS_USER/RMT/rtproject
   restorecon -RF /home/$OS_USER/web-files
 
-  systemctl restart gunicorn && systemctl restart nginx
+  restartLEMP
 }
-
 
 function install_lemp
 {
@@ -241,7 +246,7 @@ function setup_new_site ()
       setup_nginx_config_site $1 $site
       setup_php_fpm_pool $1 $site
 
-      systemctl restart php-fpm && systemctl restart nginx
+      restartLEMP
       Info "Site $site created in the /srv/www/$1/$site"
     fi
   fi
@@ -291,7 +296,13 @@ function delete_user
 			read -p "Are you shure? [y/n] " shure
 			if [[ $shure = y ]]; then
 				userdel -r $user > /dev/null 2>&1
-				rm -rf /srv/www/$user
+        rm -f $(ls /etc/php-fpm.d/$user-*)
+        rm -f $(ls /etc/nginx/sites-enabled/user1-*)
+        rm -f $(ls /etc/nginx/sites-available/user1-*)
+        rm -rf /srv/www/$user
+
+        restartLEMP
+
 			else
 				Info "User does not deleted!"
 			fi
