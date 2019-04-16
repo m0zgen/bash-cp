@@ -46,6 +46,11 @@ checkAndCreateFolder "/srv/www"
 checkAndCreateFolder "/etc/nginx/sites-available"
 checkAndCreateFolder "/etc/nginx/sites-enabled"
 
+# Checking needed software
+if ! rpm -qa | grep "jq" > /dev/null 2>&1
+      spin 'Install jq...' 'yum install jq -y'
+fi
+
 # Functions
 # ---------------------------------------------------\
 function setupSELinux {

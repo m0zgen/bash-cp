@@ -110,7 +110,6 @@ function is_lemp_installed
 	      Error "Nginx or PHP-FPM not installed"
 	fi
     # _IS_LEMP_INSTALLED=0
-
 }
 
 function allowFirewalldService() {
