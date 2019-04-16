@@ -10,6 +10,11 @@
 * Create php-fpm pool config for each site & user
 * View created users list
 
+### Upcoming
+* SELinux
+* Database(?)
+* View formatting
+
 ### Install
 Bash-co does not require installation, connect to server via SSH, install git:
 ```bash
