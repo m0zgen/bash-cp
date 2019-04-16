@@ -279,7 +279,8 @@ function setup_new_user
 
 function view_sites
 {
-	Info "\nView installed sites:"
+  space
+	Info "View installed sites:"
 
   colUsers=$(ls /srv/www | wc -l)
   if [[ "$colUsers" = "" ]]; then
@@ -288,7 +289,6 @@ function view_sites
     Info "Created users - $colUsers"
     ls /srv/www
   fi
-
   space
 }
 
