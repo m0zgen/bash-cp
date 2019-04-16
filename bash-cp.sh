@@ -254,8 +254,7 @@ function setup_new_site ()
 
 function setup_new_user
 {
-  space
-  Info "Setup new site"
+	Info "Setup new site"
 	read -p "Setup new user name: " user
 
 	if [[ $user != "" ]] ; then
@@ -276,7 +275,6 @@ function setup_new_user
 		  Info "Done! User and site created!"
 		fi
 	fi
-  space
 }
 
 function view_sites
