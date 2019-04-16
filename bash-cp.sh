@@ -360,7 +360,6 @@ else
 
   while true
   	do
-      reset
   		PS3='Please enter your choice: '
   		options=("Setup new site" "View installed sites" "Delete user" "Quit")
   		select opt in "${options[@]}"
