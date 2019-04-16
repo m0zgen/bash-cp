@@ -51,15 +51,14 @@ checkAndCreateFolder "/etc/nginx/sites-enabled"
 
 # Functions
 # ---------------------------------------------------\
+# Restart LEMP stack
 function restartLEMP
 {
   systemctl restart php-fpm && systemctl restart nginx
 }
 
-
+# Setup SELinux (testing)
 function setupSELinux {
-  # SELinux
-  # ---------------------------------------------------\
   Info "Checking SELinux..."
   isSELinux
 
@@ -76,6 +75,7 @@ function setupSELinux {
   restartLEMP
 }
 
+# Install LEMP stack
 function install_lemp
 {
     Info "Install LEMP procedure..."
@@ -128,6 +128,7 @@ function install_lemp
       fi
 }
 
+# Generate index.php page on the user > site > public_html folder
 function genIndexPage ()
 {
       cat > $1/index.php <<_EOF_
@@ -143,6 +144,7 @@ _EOF_
 
 }
 
+# Setup PHP-FPM pool for new site / user
 function setup_php_fpm_pool () {
 
   cat > /etc/php-fpm.d/$1-$2.conf <<_EOF_
@@ -164,6 +166,7 @@ chdir = /
 _EOF_
 }
 
+# Setup NGINX server config for new site / user
 function setup_nginx_config_site ()
 {
   local user=$1
@@ -225,6 +228,7 @@ _EOF_
 
 }
 
+# Setup new site
 function setup_new_site ()
 {
 
@@ -252,6 +256,7 @@ function setup_new_site ()
   fi
 }
 
+# Setup new user & new site from user menu choice
 function setup_new_user
 {
 	Info "Setup new site"
@@ -277,6 +282,7 @@ function setup_new_user
 	fi
 }
 
+# View users
 function view_sites
 {
   space
@@ -292,6 +298,7 @@ function view_sites
   space
 }
 
+# Full deletion procedure (delete user, user site folders, configs)
 function delete_user
 {
 	Info "Delete existing sites"
@@ -321,19 +328,17 @@ function delete_user
 	fi
 }
 
+# Exit from script
 function close_me
 {
 	Info "Ok, bye!"
 	exit 0
 }
 
-
 # Checking is LEMP installed
 is_lemp_installed
 
 if [ "$_IS_LEMP_INSTALLED" == "" ]; then
-    reset
-
     Info "Install NGINX and PHP-FPM?"
     echo "   1) Yes"
     echo "   2) No"
@@ -356,8 +361,10 @@ if [ "$_IS_LEMP_INSTALLED" == "" ]; then
 	fi
 else
 
+  # Bindings local variables from config/config-cp.json
   setConfigVars
 
+  # User menu rotator
   while true
   	do
   		PS3='Please enter your choice: '
@@ -385,5 +392,4 @@ else
   		 esac
   	done
    done
-
 fi
