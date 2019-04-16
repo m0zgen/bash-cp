@@ -141,7 +141,7 @@ _EOF_
 
 }
 
-function setupPppFpm() {
+function setup_php_fpm_pool () {
 
   cat > /etc/php-fpm.d/$1-$2.conf <<_EOF_
 [${1}]
@@ -242,8 +242,9 @@ function setup_new_site ()
 
       # Setup $1 = username, $2 = domain name
       setup_nginx_config_site $1 $site
+      setup_php_fpm_pool $1 $site
 
-      systemctl restart nginx
+      systemctl restart php-fpm && systemctl restart nginx
       Info "Site $site created in the /srv/www/$1/$site"
     fi
   fi
