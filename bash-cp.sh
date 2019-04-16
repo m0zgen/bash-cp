@@ -296,13 +296,13 @@ function delete_user
 			read -p "Are you shure? [y/n] " shure
 			if [[ $shure = y ]]; then
 
-        rm -f $(ls /etc/php-fpm.d/$user-*) 2>&1
-        rm -f $(ls /etc/nginx/sites-enabled/user1-*) 2>&1
-        rm -f $(ls /etc/nginx/sites-available/user1-*) 2>&1
+        rm -f $(ls /etc/php-fpm.d/$user-*) > /dev/null 2>&1
+        rm -f $(ls /etc/nginx/sites-enabled/user1-*) > /dev/null 2>&1
+        rm -f $(ls /etc/nginx/sites-available/user1-*) > /dev/null 2>&1
 
         restartLEMP
 
-        rm -rf /srv/www/$user 2>&1
+        rm -rf /srv/www/$user > /dev/null 2>&1
         userdel -r $user > /dev/null 2>&1
 
 			else
