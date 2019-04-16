@@ -281,8 +281,14 @@ function view_sites
 {
 	Info "View installed sites"
 
-	ls /srv/www
-
+  colUsers=$(ls /srv/www | wc -l)
+  if [[ "$colUsers" = "" ]]; then
+    Warn "Created users - 0"
+  else
+    Info "Created users - $colUsers"
+    ls /srv/www
+  fi
+  
 }
 
 function delete_user

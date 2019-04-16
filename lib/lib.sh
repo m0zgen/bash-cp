@@ -20,6 +20,10 @@ Error() {
 	printf "\033[1;31m$@\033[0m\n"
 }
 
+Warn() {
+        printf "\033[1;35m$@\033[0m"
+}
+
 space() {
 	echo -e "\n"
 }
