@@ -113,6 +113,11 @@ function is_lemp_installed
 
 }
 
+function allowFirewalldService() {
+	#statements
+	firewall-cmd --permanent --zone=public --add-service=$1
+}
+
 # get Actual date
 getDate() {
 	date '+%d-%m-%Y_%H-%M-%S'

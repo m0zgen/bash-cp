@@ -49,19 +49,6 @@ checkAndCreateFolder "/etc/nginx/sites-enabled"
 
 # Functions
 # ---------------------------------------------------\
-function is_lemp_installed
-{
-    if rpm -qa | grep "nginx\|php" > /dev/null 2>&1
-	then
-	      Info "Success. LEMP Installed and ready"
-	      _IS_LEMP_INSTALLED=1
-	else
-	      Error "Nginx or PHP-FPM not installed"
-	fi
-    # _IS_LEMP_INSTALLED=0
-
-}
-
 function install_lemp
 {
     Info "Install LEMP procedure..."
@@ -81,33 +68,37 @@ function install_lemp
 
       sleep 5
 
-    # Configure
-    sed -i 's/^\(user =\).*/\1 nginx/' /etc/php-fpm.d/www.conf
-    sed -i 's/^\(group =\).*/\1 nginx/' /etc/php-fpm.d/www.conf
-    sed -i 's/^\(listen =\).*/\1 \/run\/php-fpm\/www.sock/' /etc/php-fpm.d/www.conf
-    sed -i 's/;listen.owner = .*/listen.owner = nginx/' /etc/php-fpm.d/www.conf
-    sed -i 's/;listen.group = .*/listen.group = nginx/' /etc/php-fpm.d/www.conf
-    sed -i 's/;listen.mode = .*/listen.mode = 0600/' /etc/php-fpm.d/www.conf
-    sed -i '/^    include \/etc\/nginx\/conf.d*/a \    include \/etc\/nginx\/sites-available\/*.conf;' /etc/nginx/nginx.conf
+      # Configure
+      sed -i 's/^\(user =\).*/\1 nginx/' /etc/php-fpm.d/www.conf
+      sed -i 's/^\(group =\).*/\1 nginx/' /etc/php-fpm.d/www.conf
+      sed -i 's/^\(listen =\).*/\1 \/run\/php-fpm\/www.sock/' /etc/php-fpm.d/www.conf
+      sed -i 's/;listen.owner = .*/listen.owner = nginx/' /etc/php-fpm.d/www.conf
+      sed -i 's/;listen.group = .*/listen.group = nginx/' /etc/php-fpm.d/www.conf
+      sed -i 's/;listen.mode = .*/listen.mode = 0600/' /etc/php-fpm.d/www.conf
+      sed -i '/^    include \/etc\/nginx\/conf.d*/a \    include \/etc\/nginx\/sites-available\/*.conf;' /etc/nginx/nginx.conf
 
-    sed -i 's/^\(disable_functions =\).*/\1 dl,exec,passthru,pcntl_exec,pfsockopen,popen,posix_kill,posix_mkfifo,posix_setuid,proc_close,proc_open,proc_terminate,shell_exec,system,leak,posix_setpgid,posix_setsid,proc_get_status,proc_nice,show_source,escapeshellcmd/' /etc/php.ini
+      sed -i 's/^\(disable_functions =\).*/\1 dl,exec,passthru,pcntl_exec,pfsockopen,popen,posix_kill,posix_mkfifo,posix_setuid,proc_close,proc_open,proc_terminate,shell_exec,system,leak,posix_setpgid,posix_setsid,proc_get_status,proc_nice,show_source,escapeshellcmd/' /etc/php.ini
 
-    firewall-cmd --permanent --zone=public --add-service=http
-    firewall-cmd --permanent --zone=public --add-service=https
-    firewall-cmd --reload
+      # Add cert
+      installSelfSignedNginxSSL
 
-    # Enabling and start services
-    systemctl enable php-fpm.service && systemctl start php-fpm.service
-    systemctl enable nginx && systemctl start nginx
+      # Firewalld
+      allowFirewalldService "http"
+      allowFirewalldService "https"
+      firewall-cmd --reload
 
-    Info "Ok, all software installed... I'm trying self restarting..."
+      # Enabling and start services
+      systemctl enable php-fpm.service && systemctl start php-fpm.service
+      systemctl enable nginx && systemctl start nginx
 
-    $SCRIPT_PATH/$(basename $0) && exit
+      Info "Ok, all software installed... I'm trying self restarting..."
 
-    elif [[ "$DISTR" == "Fedora" ]]; then
-    	# Need
-    	dnf install nginx php-fpm php-common
-    fi
+      $SCRIPT_PATH/$(basename $0) && exit
+
+      elif [[ "$DISTR" == "Fedora" ]]; then
+      	# Need
+      	dnf install nginx php-fpm php-common
+      fi
 }
 
 function genIndexPage ()
@@ -154,6 +145,11 @@ _EOF_
   cd /etc/nginx/sites-enabled/
   ln -s /etc/nginx/sites-available/$1-$2.conf
 
+}
+
+function setupPppFpm() {
+  #statements
+  Info "Need setup php-fpm"
 }
 
 function setup_new_site ()
