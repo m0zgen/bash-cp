@@ -295,13 +295,15 @@ function delete_user
 			Info "Delete user $user"
 			read -p "Are you shure? [y/n] " shure
 			if [[ $shure = y ]]; then
-				userdel -r $user > /dev/null 2>&1
+
         rm -f $(ls /etc/php-fpm.d/$user-*)
         rm -f $(ls /etc/nginx/sites-enabled/user1-*)
         rm -f $(ls /etc/nginx/sites-available/user1-*)
         rm -rf /srv/www/$user
 
         restartLEMP
+
+        userdel -r $user > /dev/null 2>&1
 
 			else
 				Info "User does not deleted!"
