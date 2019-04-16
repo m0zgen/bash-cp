@@ -289,6 +289,8 @@ function view_sites
     ls /srv/www
   fi
 
+  space
+
 }
 
 function delete_user
