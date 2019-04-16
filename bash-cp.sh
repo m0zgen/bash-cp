@@ -33,6 +33,12 @@ ME=`basename "$0"`
 SERVER_IP=$(hostname -I | cut -d' ' -f1)
 SITE_AVALIABLE="/etc/nginx/sites-available"
 
+# Checking needed software (getconfig)
+if ! rpm -qa | grep "jq" > /dev/null 2>&1
+then
+      spin 'Install jq...' 'yum install jq -y'
+fi
+
 # DB server settings
 typeset -l DB_NAME
 DB_NAME="$(getConfig "dbname")$(getRandom)"
@@ -45,12 +51,6 @@ DB_PASS=$(getRandom)
 checkAndCreateFolder "/srv/www"
 checkAndCreateFolder "/etc/nginx/sites-available"
 checkAndCreateFolder "/etc/nginx/sites-enabled"
-
-# Checking needed software
-if ! rpm -qa | grep "jq" > /dev/null 2>&1
-then
-      spin 'Install jq...' 'yum install jq -y'
-fi
 
 # Functions
 # ---------------------------------------------------\
@@ -141,6 +141,27 @@ _EOF_
 
 }
 
+function setupPppFpm() {
+
+  cat > /etc/php-fpm.d/$1-$2.conf <<_EOF_
+[${1}]
+user = ${1}
+group = ${1}
+listen = /run/php-fpm/${1}.sock;
+listen.owner = nginx
+listen.group = nginx
+php_admin_value[disable_functions] = exec,passthru,shell_exec,system
+php_admin_flag[allow_url_fopen] = off
+pm = dynamic
+pm.max_children = 5
+pm.start_servers = 2
+pm.min_spare_servers = 1
+pm.max_spare_servers = 3
+pm.status_path = /status
+chdir = /
+_EOF_
+}
+
 function setup_nginx_config_site ()
 {
   local user=$1
@@ -160,7 +181,7 @@ server {
     }
     location ~ \.php$ {
         include /etc/nginx/fastcgi_params;
-        fastcgi_pass  unix:/run/php-fpm/www.sock;
+        fastcgi_pass  unix:/run/php-fpm/${1}.sock;
         fastcgi_index index.php;
         fastcgi_param SCRIPT_FILENAME \$document_root\$fastcgi_script_name;
     }
@@ -178,7 +199,7 @@ server {
     }
     location ~ \.php$ {
         include /etc/nginx/fastcgi_params;
-        fastcgi_pass  unix:/run/php-fpm/www.sock;
+        fastcgi_pass  unix:/run/php-fpm/${1}.sock;
         fastcgi_index index.php;
         fastcgi_param SCRIPT_FILENAME \$document_root\$fastcgi_script_name;
     }
@@ -200,11 +221,6 @@ _EOF_
   cd /etc/nginx/sites-enabled/
   ln -s /etc/nginx/sites-available/$1-$2.conf
 
-}
-
-function setupPppFpm() {
-  #statements
-  Info "Need setup php-fpm"
 }
 
 function setup_new_site ()
