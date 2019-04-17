@@ -3,10 +3,10 @@ policycoreutils-python
 nano
 wget
 jq
+moreutils
 yum-priorities
 nginx
 php-fpm
 php-common
 mariadb
 mariadb-server
-moreutils
