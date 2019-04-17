@@ -5,6 +5,7 @@
 # Libs / Configs
 # ---------------------------------------------------\
 source "$(pwd)/lib/lib.sh"
+source "$(baseDir)/lib/dbwrapper.sh"
 config="$(pwd)/config/conf-cp.json"
 
 # Envs
@@ -254,6 +255,7 @@ _EOF_
   cd /etc/nginx/sites-enabled/
   ln -s /etc/nginx/sites-available/$1-$2.conf
 
+  addDBUser $user $site
 }
 
 # Setup new site
