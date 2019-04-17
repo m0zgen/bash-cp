@@ -1,0 +1,16 @@
+[
+  {
+    "name": "JAYS",
+    "sourceConnection": {
+      "name": "ORACLE_connection",
+      "connectionType": "JDBC",
+      "commProtocol": "JDBC"
+    },
+    "checked": true,
+    "newlyAdded": false,
+    "id": null,
+    "groups": [],
+    "displayName": "SCOTT",
+    "defaultLevel": "MANAGED"
+  }
+]

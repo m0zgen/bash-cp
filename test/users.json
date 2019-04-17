@@ -1,0 +1,12 @@
+{
+  "users": {
+    "vasya": {
+      "site1": "enable",
+      "site2": "disable"
+    },
+    "test": {
+      "site1": "enable",
+      "site2": "disable"
+    }
+  }
+}

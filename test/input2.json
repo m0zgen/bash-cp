@@ -1,0 +1,16 @@
+[
+  {
+    "name": "ROOB",
+    "sourceConnection": {
+      "name": "MYSQL_connection",
+      "connectionType": "JDBC",
+      "commProtocol": "JDBC"
+    },
+    "checked": true,
+    "newlyAdded": false,
+    "id": null,
+    "groups": [],
+    "displayName": "ROOB",
+    "defaultLevel": "MANAGED"
+  }
+]

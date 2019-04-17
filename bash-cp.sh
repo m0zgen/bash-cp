@@ -75,6 +75,25 @@ function setupSELinux {
   restartLEMP
 }
 
+function setupMariaDB
+{
+  DB_ROOT_PASS=$(cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w 8 | head -n 1)
+
+  # Enable and start MariaDB
+  systemctl enable mariadb && systemctl start mariadb
+
+  # mysql_secure_installation analog
+  mysql --user=root <<_EOF_
+  UPDATE mysql.user SET Password=PASSWORD('${DB_ROOT_PASS}') WHERE User='root';
+  DELETE FROM mysql.user WHERE User='';
+  DELETE FROM mysql.user WHERE User='root' AND Host NOT IN ('localhost', '127.0.0.1', '::1');
+  DROP DATABASE IF EXISTS test;
+  DELETE FROM mysql.db WHERE Db='test' OR Db='test\\_%';
+  FLUSH PRIVILEGES;
+_EOF_
+
+}
+
 # Install LEMP stack
 function install_lemp
 {
@@ -95,7 +114,7 @@ function install_lemp
 
       sleep 5
 
-      # Configure
+      # Configure NGINX, PHP-FPM
       sed -i 's/^\(user =\).*/\1 nginx/' /etc/php-fpm.d/www.conf
       sed -i 's/^\(group =\).*/\1 nginx/' /etc/php-fpm.d/www.conf
       sed -i 's/^\(listen =\).*/\1 \/run\/php-fpm\/www.sock/' /etc/php-fpm.d/www.conf
@@ -105,6 +124,9 @@ function install_lemp
       sed -i '/^    include \/etc\/nginx\/conf.d*/a \    include \/etc\/nginx\/sites-available\/*.conf;' /etc/nginx/nginx.conf
 
       sed -i 's/^\(disable_functions =\).*/\1 dl,exec,passthru,pcntl_exec,pfsockopen,popen,posix_kill,posix_mkfifo,posix_setuid,proc_close,proc_open,proc_terminate,shell_exec,system,leak,posix_setpgid,posix_setsid,proc_get_status,proc_nice,show_source,escapeshellcmd/' /etc/php.ini
+
+      # Setup MariaDB
+      setupMariaDB
 
       # Add cert
       installSelfSignedNginxSSL
