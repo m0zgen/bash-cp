@@ -12,5 +12,6 @@ users="$baseDir/config/users.json"
 source "$baseDir/lib/lib.sh"
 
 function addDBUser() {
-  jq '.users.$1 += {"$2": "enable"}' users.json | sponge users.json
+
+  	jq '.users."$1" += {"$2": "enable"}' $users  | sponge $users
 }
