@@ -104,6 +104,12 @@ function checkAndCreateFolder() {
 	fi
 }
 
+function checkAndCreateFile() {
+	if [[ ! -f $1 ]]; then
+	  touch $1
+	fi
+}
+
 function is_lemp_installed
 {
     if rpm -qa | grep "nginx\|php" > /dev/null 2>&1

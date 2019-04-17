@@ -33,6 +33,12 @@ ME=`basename "$0"`
 SERVER_IP=$(hostname -I | cut -d' ' -f1)
 SITE_AVALIABLE="/etc/nginx/sites-available"
 
+#
+if [[ ! -f $SCRIPT_PATH/config/users.json ]]; then
+	  touch $SCRIPT_PATH/config/users.json
+    echo -e "{\n}" > $SCRIPT_PATH/config/users.json
+fi
+
 function setConfigVars
 {
   # DB server settings
