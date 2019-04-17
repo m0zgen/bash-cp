@@ -5,7 +5,7 @@
 # Libs / Configs
 # ---------------------------------------------------\
 source "$(pwd)/lib/lib.sh"
-source "$(baseDir)/lib/dbwrapper.sh"
+source "$(pwd)/lib/dbwrapper.sh"
 config="$(pwd)/config/conf-cp.json"
 
 # Envs
