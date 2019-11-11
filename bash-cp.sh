@@ -95,7 +95,7 @@ function installSelfSignedNginxSSL() {
   # Generate SSL and config
   mkdir -p /etc/nginx/ssl
 
-  openssl req -x509 -nodes -days 999 -newkey rsa:4096 \
+  openssl req -x509 -nodes -days 365 -newkey rsa:4096 \
   -keyout /etc/nginx/ssl/nginx-selfsigned.key -out /etc/nginx/ssl/nginx-selfsigned.crt \
   -subj "/C=$country/ST=$state/L=$locality/O=$organization/OU=$organizationalunit/CN=$SERVER_NAME/emailAddress=$email"
 }
