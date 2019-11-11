@@ -89,7 +89,7 @@ function installSelfSignedNginxSSL() {
   state=Earth
   locality=World
   organization=$SERVER_NAME
-  organizationalunit=SysAdmins
+  organizationalunit=$SERVER_NAME
   email=root@$SERVER_NAME
 
   # Generate SSL and config
