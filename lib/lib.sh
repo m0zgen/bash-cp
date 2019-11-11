@@ -81,23 +81,6 @@ function installSoftware() {
 	yum install $(cat $soft) -y
 }
 
-function installSelfSignedNginxSSL() {
-	# Self-signed cert data
-	country=KZ
-	state=Almaty
-	locality=Almaty
-	organization=raimbek.com
-	organizationalunit=IT
-	email=support@raimbek.com
-
-	# Generate SSL and config
-	mkdir -p /etc/nginx/ssl
-
-	openssl req -x509 -nodes -days 999 -newkey rsa:4096 \
-	-keyout /etc/nginx/ssl/nginx-selfsigned.key -out /etc/nginx/ssl/nginx-selfsigned.crt \
-	-subj "/C=$country/ST=$state/L=$locality/O=$organization/OU=$organizationalunit/CN=$SERVER_NAME/emailAddress=$email"
-}
-
 function checkAndCreateFolder() {
 	if [[ ! -d $1 ]]; then
 	  mkdir -p $1

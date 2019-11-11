@@ -83,6 +83,23 @@ function setupSELinux {
   restartLEMP
 }
 
+function installSelfSignedNginxSSL() {
+  # Self-signed cert data
+  country=XX
+  state=Earth
+  locality=World
+  organization=$SERVER_NAME
+  organizationalunit=SysAdmins
+  email=root@$SERVER_NAME
+
+  # Generate SSL and config
+  mkdir -p /etc/nginx/ssl
+
+  openssl req -x509 -nodes -days 999 -newkey rsa:4096 \
+  -keyout /etc/nginx/ssl/nginx-selfsigned.key -out /etc/nginx/ssl/nginx-selfsigned.crt \
+  -subj "/C=$country/ST=$state/L=$locality/O=$organization/OU=$organizationalunit/CN=$SERVER_NAME/emailAddress=$email"
+}
+
 function setupMariaDB
 {
   DB_ROOT_PASS=$(cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w 8 | head -n 1)
