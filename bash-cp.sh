@@ -33,6 +33,7 @@ fi
 ME=`basename "$0"`
 SERVER_IP=$(hostname -I | cut -d' ' -f1)
 SITE_AVALIABLE="/etc/nginx/sites-available"
+LOG=$SCRIPT_PATH/config.log
 
 #
 if [[ ! -f $SCRIPT_PATH/config/users.json ]]; then
@@ -85,6 +86,8 @@ function setupSELinux {
 function setupMariaDB
 {
   DB_ROOT_PASS=$(cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w 8 | head -n 1)
+
+  echo $DB_ROOT_PASS >> $LOG
 
   # Enable and start MariaDB
   systemctl enable mariadb && systemctl start mariadb
