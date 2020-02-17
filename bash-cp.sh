@@ -335,8 +335,9 @@ function setup_new_user
 # View users
 function view_sites
 {
+	
   space
-	Info "View installed sites:"
+  Info "View installed sites:"
 
   colUsers=$(ls /srv/www | wc -l)
   if [[ "$colUsers" = "" ]]; then
@@ -346,6 +347,30 @@ function view_sites
     ls /srv/www
   fi
   space
+}
+
+# Reset permissions for public folder
+function reset_usr_perm ()
+{
+  
+  view_sites
+
+  read -p "Please enter user name: " user
+
+  if [[ $user != "" ]] ; then
+
+      if [[ -d /srv/www/$user ]]; then
+        chown -Rf $user:nginx /srv/www/$user
+        find /srv/www/$user/ -type f -exec chmod 0644 {} \;
+        find /srv/www/$user/ -type d -exec chmod 0755 {} \;
+        Info "Permissions for $user has been resetted"
+      else
+          Error "User doesn't exist!"
+      fi
+
+    else
+      Error "Please set user name!"
+  fi
 }
 
 # Full deletion procedure (delete user, user site folders, configs)
@@ -418,7 +443,7 @@ else
   while true
   	do
   		PS3='Please enter your choice: '
-  		options=("Setup new site" "View installed sites" "Delete user" "Quit")
+  		options=("Setup new site" "View installed sites" "Reset folder permissions for user" "Delete user" "Quit")
   		select opt in "${options[@]}"
   		do
   		 case $opt in
@@ -430,6 +455,10 @@ else
   		         view_sites
   		         break
   		         ;;
+          "Reset folder permissions for user")
+               reset_usr_perm
+               break
+               ;;
   		     "Delete user")
   		         delete_user
   		         break
