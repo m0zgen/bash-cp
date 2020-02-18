@@ -371,7 +371,7 @@ function create_db ()
       mysql -u root -p$(cat $LOG) -e "CREATE DATABASE $db"
       mysql -u root -p$(cat $LOG) -e "GRANT ALL PRIVILEGES ON $db.* TO $DB_SITE_USER@localhost IDENTIFIED BY '$DB_SITE_USER_PASS'"
 
-      echo -e "DB_USER: $DB_SITE_USER\nDB_PASS: $DB_SITE_USER_PASS" > $CREDS_FOLDER/$db.txt
+      echo -e "DB_USER: $DB_SITE_USER\nDB_PASS: $DB_SITE_USER_PASS\nDB_NAME: $db" > $CREDS_FOLDER/$db.txt
 
     else
       Error "Database exist!"
@@ -409,6 +409,41 @@ function delete_db ()
       Error "Please set DB name!"
   fi
 
+}
+
+function import_db ()
+{
+  read -p "Enter path to sql dump: " path
+
+  if [[ $path != "" ]]; then
+    if [[ -f $path ]]; then
+      # do stuff
+
+      read -p "Enter database name: " dbname
+
+      if [[ $dbname != "" ]]; then
+        if [[ -d /var/lib/mysql/$dbname ]]; then
+          IMPORT_DB_USER_PASS=$(cat $CREDS_FOLDER/$dbname.txt | grep "PASS:" | awk '{print $2}')
+          IMPORT_DB_USER=$(cat $CREDS_FOLDER/$dbname.txt | grep "DB_USER:" | awk '{print $2}')
+          IMPORT_DB=$(cat $CREDS_FOLDER/$dbname.txt | grep "NAME:" | awk '{print $2}')
+
+          mysql -u $IMPORT_DB_USER -p$IMPORT_DB_USER_PASS $dbname < $path
+          Info "Done!"
+        fi
+      else
+        Error "Database does not found!"
+      fi
+
+    fi
+  else
+    Error "Please enter database path!"
+  fi
+
+}
+
+function show_db ()
+{
+  mysql -u root -p$(cat $LOG) -e 'show databases;'
 }
 
 # Reset permissions for public folder
@@ -465,6 +500,11 @@ function delete_user
 	fi
 }
 
+function install_php_modules ()
+{
+  yum install $(cat $SCRIPT_PATH/inst/php.txt) -y
+}
+
 # Exit from script
 function close_me
 {
@@ -505,7 +545,18 @@ else
   while true
   	do
   		PS3='Please enter your choice: '
-  		options=("Setup new site" "View installed sites" "Create DB for site" "Delete DB" "Reset folder permissions for user" "Delete user" "Quit")
+  		options=(
+        "Setup new site"
+        "View installed sites"
+        "Create DB for site"
+        "Import dump to DB"
+        "Show all DBs"
+        "Delete DB"
+        "Reset folder permissions for user"
+        "Delete user"
+        "Install php modules"
+        "Quit"
+        )
   		select opt in "${options[@]}"
   		do
   		 case $opt in
@@ -521,6 +572,14 @@ else
                create_db
                break
                ;;
+          "Import dump to DB")
+               import_db
+               break
+               ;;
+          "Show all DBs")
+               show_db
+               break
+               ;;
           "Delete DB")
                delete_db
                break
@@ -533,6 +592,10 @@ else
   		         delete_user
   		         break
   		         ;;
+          "Install php modules")
+               install_php_modules
+               break
+               ;;
   		     "Quit")
   		         Info "Thank You... Bye"
   		         exit
