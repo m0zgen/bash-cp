@@ -25,7 +25,7 @@ Warn() {
 }
 
 space() {
-	echo -e "\n"
+	echo ""
 }
 
 # Functions

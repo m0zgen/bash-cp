@@ -33,6 +33,7 @@ fi
 ME=`basename "$0"`
 SERVER_IP=$(hostname -I | cut -d' ' -f1)
 SITE_AVALIABLE="/etc/nginx/sites-available"
+CREDS_FOLDER=$SCRIPT_PATH/creds
 LOG=$SCRIPT_PATH/config.log
 SERVER_NAME=`hostname`
 
@@ -48,6 +49,10 @@ email=root@$SERVER_NAME
 if [[ ! -f $SCRIPT_PATH/config/users.json ]]; then
 	  touch $SCRIPT_PATH/config/users.json
     echo -e "{\n}" > $SCRIPT_PATH/config/users.json
+fi
+
+if [[ ! -d $CREDS_FOLDER ]]; then
+    mkdir -p $CREDS_FOLDER
 fi
 
 function setConfigVars
@@ -378,8 +383,9 @@ function setup_new_user
 # View users
 function view_sites
 {
+	
   space
-	Info "View installed sites:"
+  Info "View installed sites:"
 
   colUsers=$(ls /srv/www | wc -l)
   if [[ "$colUsers" = "" ]]; then
@@ -389,6 +395,122 @@ function view_sites
     ls /srv/www
   fi
   space
+}
+
+function create_db ()
+{
+  
+  DB_SITE_USER_PASS=$(cat /dev/urandom | tr -dc 'a-zA-Z0-9' | fold -w 8 | head -n 1)
+
+  read -p "Please enter DB name: " db
+
+  if [[ $db != "" ]] ; then
+
+    if [ ! -d /var/lib/mysql/$db ] ; then 
+      DB_SITE_USER+="${db}usr"
+
+      # Create databse and user
+
+      mysql -u root -p$(cat $LOG) -e "CREATE DATABASE $db"
+      mysql -u root -p$(cat $LOG) -e "GRANT ALL PRIVILEGES ON $db.* TO $DB_SITE_USER@localhost IDENTIFIED BY '$DB_SITE_USER_PASS'"
+
+      echo -e "DB_USER: $DB_SITE_USER\nDB_PASS: $DB_SITE_USER_PASS\nDB_NAME: $db" > $CREDS_FOLDER/$db.txt
+
+    else
+      Error "Database exist!"
+    fi
+
+    else
+      Error "Please set DB name!"
+  fi
+
+}
+
+function delete_db ()
+{
+
+  ## How to show all mysql users
+  ## select host, user, password from mysql.user;
+  read -p "Please enter DB name: " ddb
+
+  if [[ $ddb != "" ]] ; then
+
+    if [ -d /var/lib/mysql/$ddb ] ; then 
+      
+      DEL_SITE_USER=$(cat $CREDS_FOLDER/$ddb.txt | grep "DB_USER:" | awk '{print $2}')
+
+      mysql -u root -p$(cat $LOG) -D $ddb -e "DROP DATABASE $ddb"
+      mysql -u root -p$(cat $LOG) -e "DROP USER '$DEL_SITE_USER'@'localhost';"      
+
+      rm -rf $CREDS_FOLDER/$ddb.txt
+
+    else
+      Error "Database doesn't exist!"
+    fi
+
+    else
+      Error "Please set DB name!"
+  fi
+
+}
+
+function import_db ()
+{
+  read -p "Enter path to sql dump: " path
+
+  if [[ $path != "" ]]; then
+    if [[ -f $path ]]; then
+      # do stuff
+
+      read -p "Enter database name: " dbname
+
+      if [[ $dbname != "" ]]; then
+        if [[ -d /var/lib/mysql/$dbname ]]; then
+          IMPORT_DB_USER_PASS=$(cat $CREDS_FOLDER/$dbname.txt | grep "PASS:" | awk '{print $2}')
+          IMPORT_DB_USER=$(cat $CREDS_FOLDER/$dbname.txt | grep "DB_USER:" | awk '{print $2}')
+          IMPORT_DB=$(cat $CREDS_FOLDER/$dbname.txt | grep "NAME:" | awk '{print $2}')
+
+          mysql -u $IMPORT_DB_USER -p$IMPORT_DB_USER_PASS $dbname < $path
+          Info "Done!"
+        fi
+      else
+        Error "Database does not found!"
+      fi
+
+    fi
+  else
+    Error "Please enter database path!"
+  fi
+
+}
+
+function show_db ()
+{
+  mysql -u root -p$(cat $LOG) -e 'show databases;'
+}
+
+# Reset permissions for public folder
+function reset_usr_perm ()
+{
+  
+  view_sites
+
+  read -p "Please enter user name: " user
+
+  if [[ $user != "" ]] ; then
+
+      if [[ -d /srv/www/$user ]]; then
+        chown -Rf $user:nginx /srv/www/$user
+        find /srv/www/$user/ -type f -exec chmod 0644 {} \;
+        find /srv/www/$user/ -type d -exec chmod 0755 {} \;
+        Info "Permissions for $user has been resetted"
+      else
+          Error "User doesn't exist!"
+      fi
+
+    else
+      Error "Please set user name!"
+  fi
 }
 
 # Full deletion procedure (delete user, user site folders, configs)
@@ -419,6 +541,11 @@ function delete_user
 			Error "User does not exist!"
 		fi
 	fi
+}
+
+function install_php_modules ()
+{
+  yum install $(cat $SCRIPT_PATH/inst/php.txt) -y
 }
 
 # Exit from script
@@ -461,7 +588,18 @@ else
   while true
   	do
   		PS3='Please enter your choice: '
-  		options=("Setup new site" "View installed sites" "Delete user" "Quit")
+  		options=(
+        "Setup new site"
+        "View installed sites"
+        "Create DB for site"
+        "Import dump to DB"
+        "Show all DBs"
+        "Delete DB"
+        "Reset folder permissions for user"
+        "Delete user"
+        "Install php modules"
+        "Quit"
+        )
   		select opt in "${options[@]}"
   		do
   		 case $opt in
@@ -473,10 +611,34 @@ else
   		         view_sites
   		         break
   		         ;;
+          "Create DB for site")
+               create_db
+               break
+               ;;
+          "Import dump to DB")
+               import_db
+               break
+               ;;
+          "Show all DBs")
+               show_db
+               break
+               ;;
+          "Delete DB")
+               delete_db
+               break
+               ;;     
+          "Reset folder permissions for user")
+               reset_usr_perm
+               break
+               ;;
   		     "Delete user")
   		         delete_user
   		         break
   		         ;;
+          "Install php modules")
+               install_php_modules
+               break
+               ;;
   		     "Quit")
   		         Info "Thank You... Bye"
   		         exit
