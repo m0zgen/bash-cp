@@ -100,59 +100,14 @@ days=365
 
 function installSelfSignedNginxSSL() {
 
-# Generate SSL and config
-mkdir -p /etc/nginx/ssl
-
-openssl req -x509 -nodes -days $days -newkey rsa:4096 \
--keyout $SCRIPT_PATH/nginx-selfsigned.key -out $SCRIPT_PATH/nginx-selfsigned.crt \
--subj "/C=$country/ST=$state/L=$locality/O=$organization/OU=$organizationalunit/CN=$SERVER_NAME/emailAddress=$email"
-
-
   # Generate SSL and config
-#   mkdir -p /etc/nginx/ssl
+  mkdir -p /etc/nginx/ssl
 
-# cat > $SCRIPT_PATH/ssl.conf <<_EOF_
-# [req]
-# distinguished_name = req_distinguished_name
-# req_extensions = v3_req
-# prompt = no
-# [req_distinguished_name]
-# C = ${country}
-# ST = ${state}
-# L = ${locality}
-# O = ${SERVER_NAME}
-# OU = ${SERVER_NAME}
-# CN = www.${SERVER_NAME}
-# [v3_req]
-# keyUsage = keyEncipherment, dataEncipherment
-# extendedKeyUsage = serverAuth
-# subjectAltName = @alt_names
-# [alt_names]
-# DNS.1 = www.${SERVER_NAME}
-# DNS.2 = ${SERVER_NAME}
-# _EOF_
+  openssl req -x509 -nodes -days $days -newkey rsa:4096 \
+  -keyout $SCRIPT_PATH/nginx-selfsigned.key -out $SCRIPT_PATH/nginx-selfsigned.crt \
+  -subj "/C=$country/ST=$state/L=$locality/O=$organization/OU=$organizationalunit/CN=$SERVER_NAME/emailAddress=$email"
 
-# openssl req -new -sha256 -key /etc/nginx/ssl/nginx-selfsigned.key \
-#   -config $SCRIPT_PATH/ssl.conf \
-#   -out /etc/nginx/ssl/nginx-selfsigned.crt
-
-
-#   openssl req -new -sha256 -key /etc/nginx/ssl/nginx-selfsigned.key \
-#   -subj "/C=$country/ST=$state/L=$locality/O=$organization/OU=$organizationalunit/CN=$SERVER_NAME/emailAddress=$email" \
-#   -reqexts SAN \
-#   -config <(cat /etc/ssl/openssl.cnf <(printf "[SAN]\nsubjectAltName=DNS:$organizationalunit,DNS:www.organizationalunit")) \
-#   -out /etc/nginx/ssl/nginx-selfsigned.crt
-
-# openssl req -new \
-#     -key "$PRIVATE_KEY" \
-#     -sha256 \
-#     -config "$OPTIONS_FILE" \
-#     -subj "/C=US/ST=California/L=San Francisco/O=My Company, Inc./CN=*.*.$DOMAIN/" \
-#     -out "$CSR_FILENAME"
-
-  #openssl req -x509 -nodes -days 365 -newkey rsa:4096 \
-  #-keyout /etc/nginx/ssl/nginx-selfsigned.key -out /etc/nginx/ssl/nginx-selfsigned.crt \
-  #-subj "/C=$country/ST=$state/L=$locality/O=$organization/OU=$organizationalunit/CN=$SERVER_NAME/emailAddress=$email"
+  mv $SCRIPT_PATH/nginx-selfsigned.key $SCRIPT_PATH/nginx-selfsigned.crt /etc/nginx/ssl/
 
 }
 
@@ -280,7 +235,7 @@ function setup_nginx_config_site ()
   cat > /etc/nginx/sites-available/$1-$2.conf <<_EOF_
 server {
     listen         80;
-    listen         [::]:80;
+    # listen         [::]:80;
 
     server_name ${2} www.${2};
     access_log /srv/www/${1}/${2}/logs/access.log;
@@ -297,7 +252,7 @@ server {
     }
 }
 server {
-    listen 443 ssl;
+    listen 443 ssl http2;
     server_name ${2} www.${2};
 
     location = /favicon.ico { access_log off; log_not_found off; }
@@ -313,7 +268,7 @@ server {
         fastcgi_index index.php;
         fastcgi_param SCRIPT_FILENAME \$document_root\$fastcgi_script_name;
     }
-ssl on;
+
 ssl_certificate /etc/nginx/ssl/nginx-selfsigned.crt;
 ssl_certificate_key /etc/nginx/ssl/nginx-selfsigned.key;
 
