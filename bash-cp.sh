@@ -508,7 +508,7 @@ function delete_user
 
 function install_php_modules ()
 {
-  yum install $(cat $SCRIPT_PATH/inst/php.txt) -y
+  yum install $(cat $SCRIPT_PATH/inst/php72.txt) -y
 }
 
 # Exit from script
