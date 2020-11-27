@@ -1,0 +1,9 @@
+nano
+wget
+jq
+nginx
+php-fpm
+php-common
+mariadb
+mariadb-server
+# dnf -y --enablerepo=PowerTools install moreutils
