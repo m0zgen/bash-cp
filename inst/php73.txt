@@ -1,0 +1,16 @@
+php-json
+php-xml
+php-pdo
+php-pear
+php-xmlrpc
+php-gd
+php-cli
+php-pspell
+php73-php-json
+php73-php-xml
+php73-runtime
+php73-php-common
+php-process
+php-mysqlnd
+php
+php-pecl-apcu
