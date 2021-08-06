@@ -9,6 +9,7 @@ SCRIPT_PATH=$(cd `dirname "${BASH_SOURCE[0]}"` && pwd)
 baseDir=$(cd -P . && pwd -P)
 config="$baseDir/config/conf-rmt.json"
 soft="$baseDir/lib/os-packages.txt"
+soft8="$baseDir/lib/os8-packages.txt"
 
 # Notify in colors
 # ---------------------------------------------------\
@@ -56,13 +57,18 @@ isSELinux() {
 	fi
 }
 
+installRemi7() {
+	yum install http://rpms.famillecollet.com/enterprise/remi-release-7.rpm -y
+	yum-config-manager --enable remi-php72
+}
+
+installRemi8() {
+	yum install http://rpms.famillecollet.com/enterprise/remi-release-8.rpm -y
+}
+
 installRepos() {
 	# Install epel
 	yum install yum-utils epel-release -y
-
-	# Remi
-	yum install http://rpms.famillecollet.com/enterprise/remi-release-7.rpm -y
-	yum-config-manager --enable remi-php72
 
 # NGINX repo
 # http://nginx.org/en/linux_packages.html
@@ -75,10 +81,17 @@ enabled=1
 _EOF_
 }
 
-function installSoftware() {
+function installSoftware7() {
 	echo $soft > ~/log.txt
 	echo "yum install $(cat $soft) -y" >> ~/log.txt
 	yum install $(cat $soft) -y
+}
+
+function installSoftware8() {
+	dnf config-manager --set-enabled powertools
+	echo $soft > ~/log.txt
+	echo "yum install $(cat $soft8) -y" >> ~/log.txt
+	yum install $(cat $soft8) -y
 }
 
 function checkAndCreateFolder() {
