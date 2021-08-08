@@ -10,6 +10,7 @@ baseDir=$(cd -P . && pwd -P)
 config="$baseDir/config/conf-rmt.json"
 soft="$baseDir/lib/os-packages.txt"
 soft8="$baseDir/lib/os8-packages.txt"
+php74="$baseDir/lib/php74-packages.txt"
 
 # Notify in colors
 # ---------------------------------------------------\
@@ -92,6 +93,7 @@ function installSoftware8() {
 	echo $soft > ~/log.txt
 	echo "yum install $(cat $soft8) -y" >> ~/log.txt
 	yum install $(cat $soft8) -y
+	yum install $(cat php74) -y
 }
 
 function checkAndCreateFolder() {
