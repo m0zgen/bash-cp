@@ -1,0 +1,17 @@
+php81-php-json
+php81-php-xml
+php81-php-pdo
+php81-php-pear
+php81-php-xmlrpc
+php81-php-gd
+php81-php-cli
+php81-php-fpm
+php81-php-pspell
+php81-php-pecl-memcache
+php81-php-snmp
+php81-php-process
+php81-php-mysqlnd
+php81
+php81-php-xml
+php81-php-pecl-apcu
+php81-php-pecl-redis

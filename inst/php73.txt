@@ -14,3 +14,9 @@ php-process
 php-mysqlnd
 php
 php-pecl-apcu
+
+
+
+
+
+yum install php-curl php-mysqlnd  php-intl php-xml php-mbstring php-zip php php-common php-opcache php-mcrypt php-cli php-gd php-fpm
