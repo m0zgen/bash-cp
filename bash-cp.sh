@@ -21,6 +21,7 @@ isRoot
 # Checking distro
 if [ -e /etc/centos-release ]; then
     DISTR="CentOS"
+    OSRELEASE=`rpm -E %{rhel}`
 elif [ -e /etc/fedora-release ]; then
     DISTR="Fedora"
     Error "At this time scipt workink on CentOS only"
@@ -107,6 +108,7 @@ function installSelfSignedNginxSSL() {
   -keyout $SCRIPT_PATH/nginx-selfsigned.key -out $SCRIPT_PATH/nginx-selfsigned.crt \
   -subj "/C=$country/ST=$state/L=$locality/O=$organization/OU=$organizationalunit/CN=$SERVER_NAME/emailAddress=$email"
 
+  mkdir -p /etc/nginx/ssl/
   mv $SCRIPT_PATH/nginx-selfsigned.key $SCRIPT_PATH/nginx-selfsigned.crt /etc/nginx/ssl/
 
 }
@@ -135,6 +137,8 @@ _EOF_
 # Install LEMP stack
 function install_lemp
 {
+    
+
     Info "Install LEMP procedure..."
 
     if [[ "$DISTR" == "CentOS" ]]; then
@@ -144,12 +148,28 @@ function install_lemp
       # ---------------------------------------------------\
       # Install updates && repos
       spin 'Erase packages...' 'yum erase iwl* -y'
-      spin 'Update system...' 'yum update -y'
+      # spin 'Update system...' 'yum update -y'
+      yum update -y
       # NGINX, REMI
       spin 'Install repos...' 'installRepos'
-      # Install PSQL, Redis, Python 3.6 and etc...
-      spin 'Install general software...' 'installSoftware'
 
+      Info "Checking CentOS release..."
+      if [[ "$OSRELEASE" == 7 ]]; then
+        echo "Install software for CentOS 7 release.."
+        spin 'Install repos...' 'installRemi7'
+        # Install PSQL, Redis, Python 3.6 and etc...
+        # spin 'Install general software...' 'installSoftware7'
+        installSoftware7
+      elif [[ "$OSRELEASE" == 8 ]]; then
+        echo "Install software for CentOS 8 release.."
+        spin 'Install repos...' 'installRemi8'
+        # spin 'Install general software...' 'installSoftware8'
+        installSoftware8
+      else
+        echo "Unknown distribution.."
+        exit 1
+      fi
+      
       sleep 5
 
       # Configure NGINX, PHP-FPM
