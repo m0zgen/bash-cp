@@ -1,3 +1,4 @@
 config/users.json
 creds
 config.log
+.DS_Store
